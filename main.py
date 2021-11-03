@@ -1,4 +1,3 @@
-#!c:\users\lulut\appdata\local\programs\python\python39\python.exe
 import nextcord
 from nextcord.ext import commands
 
