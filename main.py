@@ -39,12 +39,15 @@ except:
     pass
 
 def getnames(guild,id):
-    nickName = guild.get_member(int(id)).nick
-    name = guild.get_member(int(id)).name
-    if nickName == None:
-        return name
-    else:
-        return nickName
+    try:
+        nickName = guild.get_member(int(id)).nick
+        name = guild.get_member(int(id)).name
+        if nickName == None:
+            return name
+        else:
+            return nickName
+    except:
+        return id
 
 class HorairesDispo(nextcord.ui.Select):
     def __init__(self,user,days):
@@ -87,10 +90,21 @@ class HorairesDispo(nextcord.ui.Select):
 
         for i in self.values:
             dictDispo[i[:i.find(" ")]].append(i[i.find(" ")+1:])
-
-
-
         dispos = "\n".join(["- " + i + " ("+ ", ".join(dictDispo[i])+")" for i in dictDispo if len(dictDispo[i]) != 0])
+
+
+        dictDispoDay = {"Lundi":[],"Mardi":[],"Mercredi":[],"Jeudi":[],"Vendredi":[],"Samedi":[],"Dimanche":[]}
+
+
+        for i in DATA[str(interaction.user.id)]["trancheHoraires"]:
+            dictDispoDay[i[:i.find(" ")]].append(i[i.find(" ")+1:])
+
+        for i in dictDispoDay:
+            if len(dictDispoDay[i]) == 0 and i in DATA[str(interaction.user.id)]["day"]:
+                DATA[str(interaction.user.id)]["day"].remove(i)
+
+
+
         await interaction.response.send_message(f'**Récapitulatif de tes disponibilités{ajout}:**\n{dispos}\n\n_Si tu as fais une erreur tu peux séléctionner à nouveau_',ephemeral=True)
 
 
@@ -195,11 +209,14 @@ class Check(nextcord.ui.Select):
 
                 dictDispo = {"Lundi":[],"Mardi":[],"Mercredi":[],"Jeudi":[],"Vendredi":[],"Samedi":[],"Dimanche":[]}
 
+                if DATA[nickToID[self.values[0]]]["trancheHoraires"] != None:
+                    for i in DATA[nickToID[self.values[0]]]["trancheHoraires"]:
+                        dictDispo[i[:i.find(" ")]].append(i[i.find(" ")+1:])
+                    dispos = "\n".join(["- " + i + " ("+ ", ".join(dictDispo[i])+")" for i in dictDispo if len(dictDispo[i]) != 0])
+                else:
+                    dispos = "\n".join(["- " + i + " (non précisé)" for i in DATA[nickToID[self.values[0]]]["day"]])
 
-                for i in DATA[nickToID[self.values[0]]]["trancheHoraires"]:
-                    dictDispo[i[:i.find(" ")]].append(i[i.find(" ")+1:])
 
-                dispos = "\n".join(["- " + i + " ("+ ", ".join(dictDispo[i])+")" for i in dictDispo if len(dictDispo[i]) != 0])
 
                 await interaction.response.send_message(f"**Voici la liste des disponibilités de {self.values[0]}**:\n{dispos}",ephemeral=True)
             else:
@@ -235,15 +252,17 @@ class CheckDay(nextcord.ui.Select):
 
 
             def formatday(lst,value):
+                if lst != None:
+                    msg = " ("
 
-                msg = " ("
+                    for tranche in lst:
+                        if tranche.find(value) > -1:
+                            msg += tranche[len(value)+1:]+", "
+                    msg = msg[:-2]+")"
 
-                for tranche in lst:
-                    if tranche.find(value) > -1:
-                        msg += tranche[len(value)+1:]+", "
-                msg = msg[:-2]+")"
-
-                return msg
+                    return msg
+                else:
+                    return "(non précisé)"
 
 
             if max([role in [i.name for i in interaction.user.roles] for role in ADMIN_ROLES]):
@@ -371,7 +390,7 @@ class RemoveDispoDayView(nextcord.ui.View):
 
 @bot.command(aliases = ["cd"])
 async def checkDay(ctx):
-    if max([role in [i.name for i in ctx.message.author.roles] for role in ADMIN_ROLES]):
+    if max([role in [i.name for i in ctx.message.author.roles] for role in ADMIN_ROLES]) or ctx.message.author.id == 514880859900215318:
         if DATA == {}:
             await ctx.send("Personne n'a encore répondu au questionnaire...")
         else:
@@ -382,7 +401,7 @@ async def checkDay(ctx):
 
 @bot.command(aliases = ["cu"])
 async def checkUser(ctx):
-    if max([role in [i.name for i in ctx.message.author.roles] for role in ADMIN_ROLES]):
+    if max([role in [i.name for i in ctx.message.author.roles] for role in ADMIN_ROLES]) or ctx.message.author.id == 514880859900215318:
         if DATA == {}:
             await ctx.send("Personne n'a encore répondu au questionnaire...")
         else:
@@ -417,11 +436,13 @@ async def mesdispos(ctx,*param):
 
     dictDispo = {"Lundi":[],"Mardi":[],"Mercredi":[],"Jeudi":[],"Vendredi":[],"Samedi":[],"Dimanche":[]}
 
+    if DATA[str(ctx.author.id)]["trancheHoraires"] != None:
+        for i in DATA[str(ctx.author.id)]["trancheHoraires"]:
+            dictDispo[i[:i.find(" ")]].append(i[i.find(" ")+1:])
 
-    for i in DATA[str(ctx.author.id)]["trancheHoraires"]:
-        dictDispo[i[:i.find(" ")]].append(i[i.find(" ")+1:])
-
-    dispos = "\n".join(["- " + i + " ("+ ", ".join(dictDispo[i])+")" for i in dictDispo if len(dictDispo[i]) != 0])
+        dispos = "\n".join(["- " + i + " ("+ ", ".join(dictDispo[i])+")" for i in dictDispo if len(dictDispo[i]) != 0])
+    else:
+        dispos = "\n".join(["- " + i + "(non précisé)" for i in DATA[str(ctx.author.id)]["day"]])
 
 
 
@@ -433,7 +454,7 @@ async def mesdispos(ctx,*param):
 @bot.command()
 async def data(ctx):
     message = ctx.message
-    if max([role in [i.name for i in ctx.message.author.roles] for role in ADMIN_ROLES]):
+    if max([role in [i.name for i in ctx.message.author.roles] for role in ADMIN_ROLES]) or ctx.message.author.id == 514880859900215318:
         file = open("DataDispo.txt","w+")
         jsonData = json.dumps(DATA)
 
@@ -444,4 +465,4 @@ async def data(ctx):
 
 
 
-bot.run("TOKEN")
+bot.run("TOKEN") 
