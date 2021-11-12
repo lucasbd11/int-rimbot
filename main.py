@@ -72,6 +72,7 @@ class HorairesDispo(nextcord.ui.Select):
 
         ajout = ""
 
+
         if DATA[str(interaction.user.id)]["trancheHoraires"] == None:
             DATA[str(interaction.user.id)]["trancheHoraires"] = self.values
         else:
@@ -328,8 +329,9 @@ class RemoveDispoSlot(nextcord.ui.Select):
 
             for i in toRemove:
                 DATA[str(interaction.user.id)]["day"].remove(i)
-
-
+##
+            if len(DATA[str(interaction.user.id)]["day"]) == 0:
+                DATA[str(interaction.user.id)]["day"] = ["Aucun"]
 
             dispos = "\n".join(["- " + i for i in removedSlots])
             await interaction.response.send_message(f'**Récapitulatif des créneaux supprimés:**\n{dispos}\n\n_Si tu as fais une erreur tu peux séléctionner à nouveau_', ephemeral=True)
@@ -465,4 +467,4 @@ async def data(ctx):
 
 
 
-bot.run("TOKEN") 
+bot.run("token")
