@@ -6,7 +6,7 @@ import json
 """
 Bot discord pour avoir les disponibiltés des membres du serveur
 Réalisé par Lucas
-Version 1.3.3
+Version 2.0.0
 """
 
 #creating sql file
@@ -59,9 +59,9 @@ class ListeDateView(nextcord.ui.View):
 
     def __init__(self,text,view,other):
         super().__init__()
-        datesTable = [["8/11 - 14/11","15/11 - 21/11","22/11 - 28/11"],
-                      ["29/11 - 5/12","6/12 - 12/12","13/12 - 19/12"],
-                      ["20/12 - 26/12","27/12 - 2/01","3/12 - 9/01"]]
+        datesTable = [["15/11 - 21/11","22/11 - 28/11","29/11 - 5/12"],
+                      ["6/12 - 12/12","13/12 - 19/12","20/12 - 26/12"],
+                      ["27/12 - 2/01","3/12 - 9/01","10/01-16/01"]]
         for x in range(3):
             for y in range(3):
                 self.add_item(ListeDate(x, y,datesTable[x][y],view,text,other))
@@ -528,5 +528,4 @@ async def data(ctx):
 
 
 
-
-bot.run("token")
+bot.run("token") #PROD
